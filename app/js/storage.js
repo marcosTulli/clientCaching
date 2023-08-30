@@ -12,10 +12,28 @@ const localAdapter = {
   clearCart: () => {
     localStorage.removeItem(cartId);
   },
+  saveProductData: (object) => {
+    const stringified = JSON.stringify(object);
+    localStorage.setItem('productData', stringified);
+    return true;
+  },
+  getProducts: () => {
+    return JSON.parse(localStorage.getItem('productData'));
+  },
 };
 
 const storage = localAdapter;
 
+const getProducts = async () => {
+  const url = 'http://localhost:3000/api';
+  await fetch(url)
+    .then((res) => res.json())
+    .then((data) => {
+      localAdapter.saveProductData(data);
+    });
+};
+
+getProducts();
 const helpers = {
   getHtml: function (id) {
     return document.getElementById(id).innerHTML;
@@ -53,6 +71,14 @@ const helpers = {
   },
   updateTotal: function () {
     this.setHtml('totalPrice', '£' + cart.total.toFixed(2));
+  },
+  updateProducts: function () {
+    let products = localAdapter.getProducts();
+    template = this.getHtml('productTemplate');
+    compiled = _.template(template, {
+      items: products.ProductList,
+    });
+    this.setHtml('main', compiled);
   },
 };
 
@@ -123,19 +149,23 @@ let cart = {
 };
 
 document.addEventListener('DOMContentLoaded', function () {
+  getProducts()
+    .then(helpers.updateProducts())
+    .then(() => {
+      let products = document.querySelectorAll('.product button');
+      [].forEach.call(products, (product) => {
+        product.addEventListener('click', function (e) {
+          let item = helpers.itemData(this.parentNode);
+          cart.addItem(item);
+        });
+      });
+    });
   if (storage.getCart()) {
     cart.setItems(storage.getCart());
     helpers.updateView();
   } else {
     helpers.emptyView();
   }
-  let products = document.querySelectorAll('.product button');
-  [].forEach.call(products, function (product) {
-    product.addEventListener('click', function (e) {
-      let item = helpers.itemData(this.parentNode);
-      cart.addItem(item);
-    });
-  });
 
   document.querySelector('#clear').addEventListener('click', function (e) {
     cart.clearItems();
