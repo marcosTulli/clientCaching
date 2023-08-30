@@ -33,7 +33,6 @@ const getProducts = async () => {
     });
 };
 
-getProducts();
 const helpers = {
   getHtml: function (id) {
     return document.getElementById(id).innerHTML;
@@ -42,12 +41,12 @@ const helpers = {
     document.getElementById(id).innerHTML = html;
     return true;
   },
-  itemData: function (object) {
-    let count = object.querySelector('.count'),
+  itemData: (object) => {
+    const count = object.querySelector('.count'),
       patt = new RegExp('^[1-9]([0-9]+)?$');
     count.value = patt.test(count.value) === true ? parseInt(count.value) : 1;
 
-    let item = {
+    const item = {
       name: object.getAttribute('data-name'),
       price: object.getAttribute('data-price'),
       id: object.getAttribute('data-id'),
@@ -57,7 +56,7 @@ const helpers = {
     return item;
   },
   updateView: function () {
-    let items = cart.getItems(),
+    const items = cart.getItems(),
       template = this.getHtml('cartTemplate'),
       compiled = _.template(template, {
         items: items,
@@ -73,16 +72,16 @@ const helpers = {
     this.setHtml('totalPrice', '£' + cart.total.toFixed(2));
   },
   updateProducts: function () {
-    let products = localAdapter.getProducts();
-    template = this.getHtml('productTemplate');
-    compiled = _.template(template, {
-      items: products.ProductList,
-    });
+    const products = localAdapter.getProducts(),
+      template = this.getHtml('productTemplate'),
+      compiled = _.template(template, {
+        items: products.ProductsList,
+      });
     this.setHtml('main', compiled);
   },
 };
 
-let cart = {
+const cart = {
   count: 0,
   total: 0,
   items: [],
@@ -91,8 +90,8 @@ let cart = {
   },
   setItems: function (items) {
     this.items = items;
-    for (let i = 0; i < this.items.length; i++) {
-      let _item = this.items[i];
+    for (const i = 0; i < this.items.length; i++) {
+      const _item = this.items[i];
       this.total += _item.total;
     }
   },
@@ -125,8 +124,8 @@ let cart = {
       return false;
     }
 
-    for (let i = 0; i < this.items.length; i++) {
-      let _item = this.items[i];
+    for (const i = 0; i < this.items.length; i++) {
+      const _item = this.items[i];
 
       if (id == _item.id) {
         return true;
@@ -135,8 +134,8 @@ let cart = {
     return false;
   },
   updateItem: function (object) {
-    for (let i = 0; i < this.items.length; i++) {
-      let _item = this.items[i];
+    for (const i = 0; i < this.items.length; i++) {
+      const _item = this.items[i];
 
       if (object.id === _item.id) {
         _item.count = parseInt(object.count) + parseInt(_item.count);
@@ -155,11 +154,12 @@ document.addEventListener('DOMContentLoaded', function () {
       let products = document.querySelectorAll('.product button');
       [].forEach.call(products, (product) => {
         product.addEventListener('click', function (e) {
-          let item = helpers.itemData(this.parentNode);
+          const item = helpers.itemData(this.parentNode);
           cart.addItem(item);
         });
       });
     });
+
   if (storage.getCart()) {
     cart.setItems(storage.getCart());
     helpers.updateView();
