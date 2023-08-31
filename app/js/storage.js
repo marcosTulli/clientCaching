@@ -20,6 +20,13 @@ const localAdapter = {
   getProducts: () => {
     return JSON.parse(localStorage.getItem('productData'));
   },
+  saveLastFetched: (date) => {
+    localStorage.setItem('lastFetched', date);
+    return true;
+  },
+  getLastFetched: () => {
+    return localStorage.getItem('lastFetched');
+  },
 };
 
 const storage = localAdapter;
@@ -33,6 +40,31 @@ const getProducts = async () => {
     });
 };
 
+const pollProductsAPI = async ({ interval }) => {
+  console.log('Start polling');
+
+  const executePoll = async () => {
+    console.log('- polling producs');
+
+    const lastFetched = storage.getLastFetched();
+    let fetchedDate = new Date(lastFetched);
+    if (!lastFetched || isDateBeforeToday(fetchedDate)) {
+      console.log('Data expired  -  calling API');
+      const result = await getProducts().then((res) => {
+        console.log(res);
+      });
+      return;
+    }
+    setTimeout(executePoll, interval);
+  };
+  return new Promise(executePoll);
+};
+
+function isDateBeforeToday(date) {
+  let fetchedDateString = date.toDateString();
+  let todayString = new Date(new Date().toDastrString());
+  return new Date(date.todateString()) < new Date(new Date().toDateString());
+}
 const helpers = {
   getHtml: function (id) {
     return document.getElementById(id).innerHTML;
@@ -90,7 +122,7 @@ const cart = {
   },
   setItems: function (items) {
     this.items = items;
-    for (const i = 0; i < this.items.length; i++) {
+    for (let i = 0; i < this.items.length; i++) {
       const _item = this.items[i];
       this.total += _item.total;
     }
@@ -124,7 +156,7 @@ const cart = {
       return false;
     }
 
-    for (const i = 0; i < this.items.length; i++) {
+    for (let i = 0; i < this.items.length; i++) {
       const _item = this.items[i];
 
       if (id == _item.id) {
@@ -134,7 +166,7 @@ const cart = {
     return false;
   },
   updateItem: function (object) {
-    for (const i = 0; i < this.items.length; i++) {
+    for (let i = 0; i < this.items.length; i++) {
       const _item = this.items[i];
 
       if (object.id === _item.id) {
@@ -148,7 +180,7 @@ const cart = {
 };
 
 document.addEventListener('DOMContentLoaded', function () {
-  getProducts()
+  pollProductsAPI({ inverval: 10000 })
     .then(helpers.updateProducts())
     .then(() => {
       let products = document.querySelectorAll('.product button');
